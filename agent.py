@@ -1,8 +1,9 @@
 from strands import Agent, tool
 from strands.models.bedrock import BedrockModel
-import boto3
 from botocore.exceptions import ClientError
+import boto3
 import json
+
 
 # ====================== CUSTOM AWS TOOLS ======================
 
@@ -42,8 +43,8 @@ def list_volumes(region: str = "region_default", filters: dict = None) -> str:
 def delete_volume(volume_id: str, region: str = "region_default") -> str:
     """Delete an EC2 volume. Use with caution!
     Args:
-        volume_id: ID od the volume to delete
-        region: region_default
+        volume_id: ID of the volume to delete
+        region: AWS region (default: region_default)
     """
     try:
         ec2 = boto3.client('ec2', region_name=region_default)
@@ -57,7 +58,7 @@ def delete_volume(volume_id: str, region: str = "region_default") -> str:
 def list_snapshots(region: str = "region_default", filters: dict = None) -> str:
     """List EC2 snapshots.
     Args:
-        region: region_default
+        region: AWS region (default: region_default)
         filters: Optional filters
     """
     try:
@@ -91,12 +92,12 @@ def delete_snapshot(snapshot_id: str, region: str = "region_default") -> str:
     """Delete an EC2 snapshot. Use with caution!
     Args:
         snapshot_id: ID of the snapshot to delete
-        region: region_default
+        region: AWS region (default: region_default)
     """
     try:
         ec2 = boto3.client('ec2', region_name=region_default)
         ec2.delete_snapshot(SnapshotId=snapshot_id)
-        return f"✅ Snapshot {snapshot_id} został usunięty pomyślnie."
+        return f"✅ Snapshot {snapshot_id} has been sucessfully deleted."
     except ClientError as e:
         return f"❌ Error deleting snapshot: {e}"
 
@@ -123,8 +124,6 @@ DO NOT take ANY actions in Amazon AWS except following on the list:
 3) list snapshots
 4) delete snapshots
 5) create report table in markdown with info about deleted volumes/snapshots
-
-Region: eu-central-1
 
 Anwser in short, technical, merit-based, but satisfying way. You could be a bit like Cookie Monster in AWS. Let's make a tool funny a bit.
 
