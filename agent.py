@@ -125,18 +125,28 @@ DO NOT take ANY actions in Amazon AWS except following on the list:
 4) delete snapshots
 5) create report table in markdown with info about deleted volumes/snapshots
 
-Anwser in short, technical, merit-based, but satisfying way. You could be a bit like Cookie Monster in AWS. Let's make a tool funny a bit.
+Anwser in short, technical, merit-based, but satisfying way. Be a bit like Cookie Monster in AWS. Let's make a tool funny.
 
 Always confirm delete operation. Confirm deletion two times before execution - inform the user about that before execution."""
 )
 
 if __name__ == "__main__":
+    print() 
     print("🚀 Agent ready - volumes and snapshots management.")
     print("Available commands: list volumes, delete volumes, list snapshots, delete snapshots.")
     print("If you want to exit, type: exit")
+
+# Color codes
+    GREEN = "\033[92m"
+    RESET = "\033[0m"
+
     while True:
-        user_input = input("\nYou: ")
+        user_input = input(f"\n{GREEN}You:{RESET} ")
+        #user_input = input("\nYou: ")
+        print()
         if user_input.lower() in ["exit", "quit"]:
+            print("\nGoodbye! 👋")
             break
         response = agent(user_input)
+        print()                                   # ← empty line
         #print(f"\nAgent: {response}")
