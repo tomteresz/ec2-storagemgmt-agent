@@ -10,7 +10,7 @@ import json
 region_default = "eu-central-1"
 
 @tool
-def list_volumes(region: str = "region_default", filters: dict = None) -> str:
+def list_volumes(region: str = region_default, filters: dict = None) -> str:
     """List EC2 volumes.
     Args:
         region: AWS region (default: region_default)
@@ -40,7 +40,7 @@ def list_volumes(region: str = "region_default", filters: dict = None) -> str:
 
 
 @tool
-def delete_volume(volume_id: str, region: str = "region_default") -> str:
+def delete_volume(volume_id: str, region: str = region_default) -> str:
     """Delete an EC2 volume. Use with caution!
     Args:
         volume_id: ID of the volume to delete
@@ -55,7 +55,7 @@ def delete_volume(volume_id: str, region: str = "region_default") -> str:
 
 
 @tool
-def list_snapshots(region: str = "region_default", filters: dict = None) -> str:
+def list_snapshots(region: str = region_default, filters: dict = None) -> str:
     """List EC2 snapshots.
     Args:
         region: AWS region (default: region_default)
@@ -88,7 +88,7 @@ def list_snapshots(region: str = "region_default", filters: dict = None) -> str:
 
 
 @tool
-def delete_snapshot(snapshot_id: str, region: str = "region_default") -> str:
+def delete_snapshot(snapshot_id: str, region: str = region_default) -> str:
     """Delete an EC2 snapshot. Use with caution!
     Args:
         snapshot_id: ID of the snapshot to delete
