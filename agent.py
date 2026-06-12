@@ -64,7 +64,7 @@ def list_snapshots(region: str = region_default, filters: dict = None) -> str:
     try:
         ec2 = boto3.client('ec2', region_name=region_default)
         
-        params = {"OwnerIds": ["self"]}   # ← Added this line (correct way)
+        params = {"OwnerIds": ["self"]}   #
         
         if filters:
             params["Filters"] = filters
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     print() 
     print("🚀 Agent ready - volumes and snapshots management.")
     print("Available commands: list volumes, delete volumes, list snapshots, delete snapshots.")
-    print("If you want to exit, type: exit")
+    print("If you want to exit, type: exit or quit")
 
 # Color codes
     GREEN = "\033[92m"
@@ -148,5 +148,5 @@ if __name__ == "__main__":
             print("\nGoodbye! 👋")
             break
         response = agent(user_input)
-        print()                                   # ← empty line
+        print()                                   # empty line
         #print(f"\nAgent: {response}")
