@@ -94,6 +94,10 @@ Agent: ✅ Volume vol-0a1b2c3d4e5f67890 has been successfully deleted.
 
 Type `exit` or `quit` to leave the interactive session.
 
+### Screenshot of the agent running
+
+![](agent_running.png?raw=true)
+
 ## 🧰 Available Tools
 
 | Tool                | Description                                                                 | Safety Rules                          |
