@@ -17,7 +17,7 @@ def list_volumes(region: str = region_default, filters: dict = None) -> str:
         filters: Optional filters (e.g. {"Name": "status", "Values": ["available"]})
     """
     try:
-        ec2 = boto3.client('ec2', region_name=region_default)
+        ec2 = boto3.client('ec2', region_name=region)
         params = {}
         if filters:
             params["Filters"] = filters
@@ -47,7 +47,7 @@ def delete_volume(volume_id: str, region: str = region_default) -> str:
         region: AWS region (default: region_default)
     """
     try:
-        ec2 = boto3.client('ec2', region_name=region_default)
+        ec2 = boto3.client('ec2', region_name=region)
         ec2.delete_volume(VolumeId=volume_id)
         return f"✅ Volume {volume_id} has been sucessfully deleted."
     except ClientError as e:
@@ -62,7 +62,7 @@ def list_snapshots(region: str = region_default, filters: dict = None) -> str:
         filters: Optional filters
     """
     try:
-        ec2 = boto3.client('ec2', region_name=region_default)
+        ec2 = boto3.client('ec2', region_name=region)
         
         params = {"OwnerIds": ["self"]}   #
         
@@ -95,7 +95,7 @@ def delete_snapshot(snapshot_id: str, region: str = region_default) -> str:
         region: AWS region (default: region_default)
     """
     try:
-        ec2 = boto3.client('ec2', region_name=region_default)
+        ec2 = boto3.client('ec2', region_name=region)
         ec2.delete_snapshot(SnapshotId=snapshot_id)
         return f"✅ Snapshot {snapshot_id} has been sucessfully deleted."
     except ClientError as e:
@@ -115,6 +115,8 @@ agent = Agent(
     
 You are helpful AWS assistant with 10 years experience as AWS Senior Cloud Engineer in Fortune500 companies. 
 
+You can work in any AWS region. The user can specify region like "eu-central-1", "eu-west-1", "us-east-1", etc.
+
 DO NOT take ANY actions in Amazon AWS except following on the list:
 
 1) list volumes
@@ -127,7 +129,7 @@ DO NOT take ANY actions in Amazon AWS except following on the list:
 
 Anwser in short, technical, merit-based, but satisfying way. Be a bit like Cookie Monster in AWS. Let's make a tool funny.
 
-Always confirm delete operation. Confirm deletion two times before execution - inform the user about that before execution."""
+Always confirm delete operation. Confirm deletion two times before execution - inform the user about that."""
 )
 
 if __name__ == "__main__":
