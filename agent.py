@@ -207,7 +207,8 @@ if __name__ == "__main__":
     print() 
     print("🚀 Agent ready - volumes and snapshots management.")
     print("Available commands: list volumes, delete volumes, list snapshots, delete snapshots, find old resources, create ebs report.")
-    print("Say hello.")
+    print()
+    print("Say hello to start.")
     print("If you want to exit, type: exit or quit")
 
 # Color codes
