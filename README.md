@@ -10,32 +10,40 @@
 
 ## 🚀 Overview
 
-This Python application builds a specialized AI agent using the **strands** framework. The agent acts as an experienced AWS Senior Cloud Engineer and can only perform a strictly limited set of safe operations on EC2 volumes and snapshots.
+This Python application builds a specialized AI agent using the **Strands Agents** framework. The agent acts as an experienced AWS Senior Cloud Engineer and can only perform a strictly limited set of safe operations on EC2 volumes and snapshots **across multiple regions**.
 
 It is designed for **cleanup and housekeeping** of unused resources with strong safety guardrails (especially around deletions).
 
+---
+
 ## ✨ Key Features
 
-- **List Volumes** — Detailed view of EC2 volumes including Name tag, size, state, type, and creation time
+- **Multi-Region Support** — Works in any AWS region (user can specify)
+- **List Volumes** — Detailed view including Name tag, all tags, size, state, type, and creation time
 - **Safe Volume Deletion** — Only deletes volumes that are:
   - In `available` state
   - Not attached to any EC2 instance
 - **Double Confirmation** on every delete operation
-- **List Snapshots** — Shows all snapshots owned by your AWS account
+- **List Snapshots** — Shows all snapshots owned by your account
 - **Snapshot Deletion** with confirmation
-- **Markdown Reports** — Automatically generates clean tables summarizing deleted resources
+- **Markdown Reports** — Automatically generates clean tables summarizing deleted resources across regions
 - **Fun Personality** — Helpful, technical, with a light "Cookie Monster in AWS" vibe
+- **Colored Terminal Output** — Green prompt for better readability
+
+---
 
 ## 📋 Prerequisites
 
 - Python 3.10 or higher
-- AWS account with **Amazon Bedrock** access enabled in `eu-central-1`
+- AWS account with **Amazon Bedrock** access enabled
 - IAM user/role with the following permissions:
   - `ec2:DescribeVolumes`
   - `ec2:DeleteVolume`
   - `ec2:DescribeSnapshots`
   - `ec2:DeleteSnapshot`
 - AWS credentials configured (via `aws configure`, environment variables, or IAM role)
+
+---
 
 ## 🛠️ Installation
 
@@ -46,23 +54,30 @@ source venv/bin/activate   # Linux/Mac
 # venv\Scripts\activate    # Windows
 
 # 2. Install dependencies
-pip install strands boto3
+pip install -r requirements.txt
 ```
 
-> **Note:** The `strands` package provides the `Agent` and `@tool` decorator used in this project.
+**`requirements.txt`**
+```txt
+strands-agents
+strands-agents-tools
+boto3
+```
+
+---
 
 ## ▶️ How to Run
 
 ```bash
-python aws_agent.py
+python agent.py
 ```
 
 You will see:
 
 ```
 🚀 Agent ready - volumes and snapshots management.
-Available commands: list volumes, delete volumes, list snapshots, delete snapshots.
-If you want to exit, type: exit
+Available commands: list volumes, delete volumes, list snapshots, delete snapshots, create ebs report. Say hello.
+If you want to exit, type: exit or quit
 
 You: 
 ```
@@ -70,44 +85,27 @@ You:
 ### Example Conversation
 
 ```
-You: list all my volumes
+You: list volumes in eu-west-1
 
-You: delete volume vol-0a1b2c3d4e5f67890
+You: list volumes, filter: available only
 
-Agent: I see volume vol-0a1b2c3d4e5f67890 is in 'available' state and not attached.
-       This action is irreversible. Do you want me to proceed with deletion? (yes/no)
-
-You: yes
-
-Agent: Confirming one more time — you want to permanently delete volume vol-0a1b2c3d4e5f67890? (yes/no)
-
-You: yes
-
-Agent: ✅ Volume vol-0a1b2c3d4e5f67890 has been successfully deleted.
-
-       ### Deletion Report
-
-       | Resource Type | Resource ID          | Status    |
-       |---------------|----------------------|-----------|
-       | Volume        | vol-0a1b2c3d4e5f67890 | Deleted   |
+You: delete volume vol-0a1b2c3d4e5f67890 in us-east-1
 ```
 
-Type `exit` or `quit` to leave the interactive session.
-
-### Screenshot of the agent running
-
-![](agent_running.png?raw=true)
+---
 
 ## 🧰 Available Tools
 
 | Tool                | Description                                                                 | Safety Rules                          |
 |---------------------|-----------------------------------------------------------------------------|---------------------------------------|
-| `list_volumes`      | Lists EC2 volumes with tags, size, state, type and creation time           | Read-only                             |
+| `list_volumes`      | Lists EC2 volumes with full tags, size, state, type and creation time      | Read-only                             |
 | `delete_volume`     | Deletes a single volume                                                     | Only `available` + unattached volumes |
-| `list_snapshots`    | Lists snapshots owned by you (`OwnerIds: self`)                             | Read-only                             |
+| `list_snapshots`    | Lists snapshots owned by you                                                | Read-only                             |
 | `delete_snapshot`   | Deletes a snapshot                                                          | Requires double confirmation          |
 
-All tools return human-readable output (JSON for lists, success/error messages for deletions).
+All tools support the `region` parameter and return human-readable output.
+
+---
 
 ## 🤖 Agent Configuration
 
@@ -119,40 +117,39 @@ model = BedrockModel(model_id="eu.anthropic.claude-sonnet-4-6")
 
 ### Core Rules (from system prompt)
 
+- Can work in **any AWS region** (user can specify)
 - Only allowed actions: **list volumes**, **delete volumes** (safe only), **list snapshots**, **delete snapshots**, and **generate markdown reports**
-- **Region is fixed** to `eu-central-1`
 - Must **confirm every deletion twice** before executing
 - Respond in short, technical, merit-based style with a touch of fun
 - Never perform any other AWS actions
+
+---
 
 ## ⚠️ Safety & Limitations
 
 - The agent **will refuse** to delete volumes that are in-use or attached to instances
 - All delete operations require explicit double confirmation
-- The current implementation hardcodes `region_default = "eu-central-1"` (the `region` parameter in tools is accepted but not yet used)
-- This tool is intended **only for cleanup of unused resources**
-- Always double-check resource IDs before confirming deletion
+- Intended **only for cleanup of unused resources**
+- Always double-check resource IDs and region before confirming deletion
+
+---
 
 ## 📁 Project Structure
 
 ```
 .
-├── aws_agent.py          # Main interactive agent script
-├── README.md             # This documentation
-└── requirements.txt      # (optional) pip dependencies
+├── agent.py                # Main interactive agent script
+├── requirements.txt
+└── README.md               # This documentation
 ```
+
+---
 
 ## 🔧 Customization Ideas
 
-- Change the default region at the top of `aws_agent.py`
-- Extend the agent with more tools (e.g. create snapshots, list instances)
+- Extend the agent with more tools (e.g. create snapshots, list instances, cost reporting)
 - Adjust the system prompt to change tone or add new rules
 - Add logging or audit trail for all delete operations
-- Integrate with Slack / Microsoft Teams for team usage
-
-## 📝 License
-
-This project is provided as-is for educational and internal tooling purposes.
 
 ---
 
