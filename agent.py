@@ -27,17 +27,19 @@ Args:
         volumes = []
         for vol in response.get('Volumes', []):
             name = next((tag['Value'] for tag in vol.get('Tags', []) if tag['Key'] == 'Name'), 'No Name')
+            tags_dict = {tag['Key']: tag['Value'] for tag in vol.get('Tags', [])}
             volumes.append({
                 "VolumeId": vol['VolumeId'],
                 "Size": vol['Size'],
                 "State": vol['State'],
                 "VolumeType": vol['VolumeType'],
                 "Name": name,
+                "Tags": tags_dict,
                 "CreateTime": str(vol['CreateTime'])
             })
         return json.dumps(volumes, indent=2, default=str)
     except Exception as e:
-        return f"Error listing volumes: {str(e)}"
+        return f"Error listing volumes in {region}: {str(e)}"
 
 
 @tool
@@ -45,14 +47,14 @@ def delete_volume(volume_id: str, region: str = region_default) -> str:
     """Delete an EC2 volume. Use with caution!
     Args:
         volume_id: ID of the volume to delete
-        region: AWS region (default: region_default)
+        region: AWS region (default: eu-central-1)
     """
     try:
         ec2 = boto3.client('ec2', region_name=region)
         ec2.delete_volume(VolumeId=volume_id)
-        return f"✅ Volume {volume_id} has been sucessfully deleted."
+        return f"✅ Volume {volume_id} has been successfully deleted in {region}."
     except ClientError as e:
-        return f"❌ Error deleting volume: {e}"
+        return f"❌ Error deleting volume in {region}: {e}"
 
 
 @tool
@@ -76,17 +78,19 @@ Args:
         snapshots = []
         for snap in response.get('Snapshots', []):
             name = next((tag['Value'] for tag in snap.get('Tags', []) if tag['Key'] == 'Name'), 'No Name')
+            tags_dict = {tag['Key']: tag['Value'] for tag in snap.get('Tags', [])}
             snapshots.append({
                 "SnapshotId": snap['SnapshotId'],
                 "VolumeId": snap.get('VolumeId'),
                 "State": snap['State'],
                 "StartTime": str(snap['StartTime']),
                 "Description": snap.get('Description', ''),
-                "Name": name
+                "Name": name,
+                "Tags": tags_dict
             })
         return json.dumps(snapshots, indent=2, default=str)
     except Exception as e:
-        return f"Error listing snapshots: {str(e)}"
+        return f"Error listing snapshots in {region}: {str(e)}"
 
 
 @tool
@@ -94,14 +98,14 @@ def delete_snapshot(snapshot_id: str, region: str = region_default) -> str:
     """Delete an EC2 snapshot. Use with caution!
     Args:
         snapshot_id: ID of the snapshot to delete
-        region: AWS region (default: region_default)
+        region: AWS region (default: eu-central-1)
     """
     try:
         ec2 = boto3.client('ec2', region_name=region)
         ec2.delete_snapshot(SnapshotId=snapshot_id)
-        return f"✅ Snapshot {snapshot_id} has been sucessfully deleted."
+        return f"✅ Snapshot {snapshot_id} has been successfully deleted in {region}."
     except ClientError as e:
-        return f"❌ Error deleting snapshot: {e}"
+        return f"❌ Error deleting snapshot in {region}: {e}"
 
 
 # ====================== AGENT ======================
@@ -127,17 +131,17 @@ DO NOT take ANY actions in Amazon AWS except following on the list:
     -   not attached to any resources
 3) list snapshots
 4) delete snapshots
-5) create report table in markdown with info about deleted volumes/snapshots
+5) create report, table in markdown, with info about volumes OR/AND snapshots from all regions
 
-Anwser in short, technical, merit-based, but satisfying way. Be a bit like Cookie Monster in AWS. Let's make a tool funny.
+Answer in short, technical, merit-based, but satisfying way. Be a bit like Cookie Monster in AWS. Let's make a tool funny.
 
-Always confirm delete operation. Confirm deletion two times before execution - inform the user about that."""
+Always confirm delete operation with YES/NO. Confirm deletion two times before execution - inform the user beforehand."""
 )
 
 if __name__ == "__main__":
     print() 
     print("🚀 Agent ready - volumes and snapshots management.")
-    print("Available commands: list volumes, delete volumes, list snapshots, delete snapshots.")
+    print("Available commands: list volumes, delete volumes, list snaphosts, delete snapshots, create ebs report. Say hello.")
     print("If you want to exit, type: exit or quit")
 
 # Color codes
