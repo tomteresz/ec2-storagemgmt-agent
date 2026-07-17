@@ -10,11 +10,12 @@ import json
 region_default = "eu-central-1"
 
 @tool
-def list_volumes(region: str = region_default, filters: dict = None) -> str:
+def list_volumes(region: str = region_default, filters: list = None) -> str:
     """List EC2 volumes.
-    Args:
-        region: AWS region (default: region_default)
-        filters: Optional filters (e.g. {"Name": "status", "Values": ["available"]})
+Args:
+    region: AWS region (default: eu-central-1)
+    filters: Optional list of filter dictionaries. 
+             Example: [{"Name": "status", "Values": ["available"]}]
     """
     try:
         ec2 = boto3.client('ec2', region_name=region)
@@ -55,11 +56,12 @@ def delete_volume(volume_id: str, region: str = region_default) -> str:
 
 
 @tool
-def list_snapshots(region: str = region_default, filters: dict = None) -> str:
+def list_snapshots(region: str = region_default, filters: list = None) -> str:
     """List EC2 snapshots.
-    Args:
-        region: AWS region (default: region_default)
-        filters: Optional filters
+Args:
+    region: AWS region (default: eu-central-1)
+    filters: Optional list of filter dictionaries. 
+             Example: [{"Name": "status", "Values": ["available"]}]
     """
     try:
         ec2 = boto3.client('ec2', region_name=region)
