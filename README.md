@@ -10,40 +10,35 @@
 
 ## 🚀 Overview
 
-This Python application builds a specialized AI agent using the **Strands Agents** framework. The agent acts as an experienced AWS Senior Cloud Engineer and can only perform a strictly limited set of safe operations on EC2 volumes and snapshots **across multiple regions**.
+This Python application builds a specialized AI agent using the **Strands Agents** framework. The agent acts as an experienced AWS Senior Cloud Engineer and can only perform a strictly limited set of safe operations on EC2 volumes and snapshots.
 
-It is designed for **cleanup and housekeeping** of unused resources with strong safety guardrails (especially around deletions).
-
----
+It is designed for **cleanup and housekeeping** of unused resources with strong safety guardrails (especially around deletions). Default region is `eu-central-1`, but any AWS region can be specified.
 
 ## ✨ Key Features
 
-- **Multi-Region Support** — Works in any AWS region (user can specify)
-- **List Volumes** — Detailed view including Name tag, all tags, size, state, type, and creation time
+- **List Volumes** — Detailed view of EC2 volumes including Name tag, size, state, type, tags, and creation time (optional filters)
 - **Safe Volume Deletion** — Only deletes volumes that are:
   - In `available` state
   - Not attached to any EC2 instance
-- **Double Confirmation** on every delete operation
-- **List Snapshots** — Shows all snapshots owned by your account
-- **Snapshot Deletion** with confirmation
-- **Markdown Reports** — Automatically generates clean tables summarizing deleted resources across regions
+- **Double Confirmation** on every delete operation (YES/NO twice)
+- **List Snapshots** — Shows all snapshots owned by your AWS account (`OwnerIds: self`)
+- **Snapshot Deletion** with double confirmation
+- **Find Old Resources** — Flags volumes and snapshots older than N days (default: 30)
+- **Markdown Reports** — Generates clean tables summarizing volumes and/or snapshots (including multi-region style reports)
+- **Multi-region** — Tools accept a `region` parameter; user can specify e.g. `eu-west-1`, `us-east-1`
 - **Fun Personality** — Helpful, technical, with a light "Cookie Monster in AWS" vibe
-- **Colored Terminal Output** — Green prompt for better readability
-
----
 
 ## 📋 Prerequisites
 
 - Python 3.10 or higher
-- AWS account with **Amazon Bedrock** access enabled
+- AWS account with **Amazon Bedrock** access enabled (model: `eu.anthropic.claude-sonnet-4-6`)
 - IAM user/role with the following permissions:
   - `ec2:DescribeVolumes`
   - `ec2:DeleteVolume`
   - `ec2:DescribeSnapshots`
   - `ec2:DeleteSnapshot`
 - AWS credentials configured (via `aws configure`, environment variables, or IAM role)
-
----
+- Bedrock model access for Claude Sonnet in the relevant inference profile / region
 
 ## 🛠️ Installation
 
@@ -57,14 +52,15 @@ source venv/bin/activate   # Linux/Mac
 pip install -r requirements.txt
 ```
 
-**`requirements.txt`**
-```txt
-strands-agents
+> **Note:** The `strands-agents` package provides `Agent`, `@tool`, and `BedrockModel`. Import path used in the script: `from strands import Agent, tool` and `from strands.models.bedrock import BedrockModel`.
+
+Content of `requirements.txt`:
+
+```
+strands-agents 
 strands-agents-tools
 boto3
 ```
-
----
 
 ## ▶️ How to Run
 
@@ -76,80 +72,138 @@ You will see:
 
 ```
 🚀 Agent ready - volumes and snapshots management.
-Available commands: list volumes, delete volumes, list snapshots, delete snapshots, create ebs report. Say hello.
+Available commands: list volumes, delete volumes, list snapshots, delete snapshots, find old resources, create ebs report.
+
+Say hello to start.
 If you want to exit, type: exit or quit
 
-You: 
+You: Hello.
 ```
 
 ### Example Conversation
 
 ```
-You: list volumes in eu-west-1
+You: list all my volumes
 
-You: list volumes, filter: available only
+You: find old resources older than 60 days in eu-central-1
 
-You: delete volume vol-0a1b2c3d4e5f67890 in us-east-1
+You: delete volume vol-0a1b2c3d4e5f67890
+
+Agent: I see volume vol-0a1b2c3d4e5f67890 is in 'available' state and not attached.
+       This action is irreversible. Do you want me to proceed with deletion? (yes/no)
+
+You: yes
+
+Agent: Confirming one more time — you want to permanently delete volume vol-0a1b2c3d4e5f67890? (yes/no)
+
+You: yes
+
+Agent: ✅ Volume vol-0a1b2c3d4e5f67890 has been successfully deleted in eu-central-1.
+
+       ### Deletion Report
+
+       | Resource Type | Resource ID           | Region       | Status  |
+       |---------------|-----------------------|--------------|---------|
+       | Volume        | vol-0a1b2c3d4e5f67890 | eu-central-1 | Deleted |
 ```
 
----
+Type `exit` or `quit` to leave the interactive session.
+
+### Screenshot of the agent running
+
+![](agent_running.png?raw=true)
 
 ## 🧰 Available Tools
 
-| Tool                | Description                                                                 | Safety Rules                          |
-|---------------------|-----------------------------------------------------------------------------|---------------------------------------|
-| `list_volumes`      | Lists EC2 volumes with full tags, size, state, type and creation time      | Read-only                             |
-| `delete_volume`     | Deletes a single volume                                                     | Only `available` + unattached volumes |
-| `list_snapshots`    | Lists snapshots owned by you                                                | Read-only                             |
-| `delete_snapshot`   | Deletes a snapshot                                                          | Requires double confirmation          |
+| Tool                 | Description                                                                 | Safety Rules                                      |
+|----------------------|-----------------------------------------------------------------------------|---------------------------------------------------|
+| `list_volumes`       | Lists EC2 volumes (Name, size, state, type, tags, CreateTime). Optional filters | Read-only                                         |
+| `delete_volume`      | Deletes a single volume by ID                                               | Agent only allows `available` + unattached volumes; double confirm |
+| `list_snapshots`     | Lists snapshots owned by you (`OwnerIds: self`). Optional filters           | Read-only                                         |
+| `delete_snapshot`    | Deletes a snapshot by ID                                                    | Double confirmation required                      |
+| `find_old_resources` | Finds volumes & snapshots older than `min_age_days` (default 30)            | Read-only; returns age in days                    |
 
-All tools support the `region` parameter and return human-readable output.
+All tools accept an optional `region` argument (default: `eu-central-1`). List tools return JSON; delete tools return success/error messages.
 
----
+### Tool signatures (summary)
+
+```python
+list_volumes(region="eu-central-1", filters=None)
+delete_volume(volume_id, region="eu-central-1")
+list_snapshots(region="eu-central-1", filters=None)
+delete_snapshot(snapshot_id, region="eu-central-1")
+find_old_resources(region="eu-central-1", min_age_days=30)
+```
+
+Filter example for volumes:
+
+```python
+[{"Name": "status", "Values": ["available"]}]
+```
 
 ## 🤖 Agent Configuration
 
 The agent is powered by:
 
 ```python
-model = BedrockModel(model_id="eu.anthropic.claude-sonnet-4-6")
+model = BedrockModel(
+    model_id="eu.anthropic.claude-sonnet-4-6"
+)
+```
+
+Default region constant:
+
+```python
+region_default = "eu-central-1"
 ```
 
 ### Core Rules (from system prompt)
 
-- Can work in **any AWS region** (user can specify)
-- Only allowed actions: **list volumes**, **delete volumes** (safe only), **list snapshots**, **delete snapshots**, and **generate markdown reports**
-- Must **confirm every deletion twice** before executing
-- Respond in short, technical, merit-based style with a touch of fun
-- Never perform any other AWS actions
-
----
+- **Allowed actions only:**
+  1. List volumes  
+  2. Delete volumes — only if state = `available` and not attached  
+  3. List snapshots  
+  4. Delete snapshots  
+  5. Find EC2 volumes and snapshots older than N days (default: 30)  
+  6. Create markdown report/table for volumes and/or snapshots (including all-regions style reports)
+- User may specify any AWS region (`eu-central-1`, `eu-west-1`, `us-east-1`, etc.)
+- **Confirm every deletion twice** (YES/NO) before execution; inform the user beforehand
+- Short, technical, merit-based answers with a light Cookie Monster–in–AWS tone
+- Refuse any other questions or AWS actions outside the list above
 
 ## ⚠️ Safety & Limitations
 
-- The agent **will refuse** to delete volumes that are in-use or attached to instances
-- All delete operations require explicit double confirmation
+- The agent **must refuse** to delete volumes that are in-use or attached to instances
+- All delete operations require **explicit double confirmation**
+- Deletion is irreversible — always verify resource IDs
+- Snapshots listed are limited to those owned by the account (`OwnerIds: ["self"]`)
+- `find_old_resources` uses volume `CreateTime` and snapshot `StartTime` in UTC
 - Intended **only for cleanup of unused resources**
-- Always double-check resource IDs and region before confirming deletion
-
----
+- Ensure Bedrock model access and EC2 permissions are correctly scoped in your account
 
 ## 📁 Project Structure
 
 ```
 .
-├── agent.py                # Main interactive agent script
-├── requirements.txt
-└── README.md               # This documentation
+├── agent.py          # Main interactive agent script
+├── README.md             # This documentation
+├── agent_running.png     # Optional screenshot
+└── requirements.txt      # pip dependencies
 ```
-
----
 
 ## 🔧 Customization Ideas
 
-- Extend the agent with more tools (e.g. create snapshots, list instances, cost reporting)
-- Adjust the system prompt to change tone or add new rules
-- Add logging or audit trail for all delete operations
+- Change `region_default` at the top of `agent.py`
+- Add filters or extra fields to list/find tools (e.g. encrypted, IOPS, storage tier)
+- Extend with create-snapshot, tag management, or Cost Explorer cost estimates
+- Adjust the system prompt for tone, extra guardrails, or multi-account support
+- Add logging / audit trail for all delete operations
+- Integrate with Slack / Microsoft Teams for team usage
+- Wire `find_old_resources` into scheduled cleanup workflows (still keep human confirmation for deletes)
+
+## 📝 License
+
+This project is provided as-is for educational and internal tooling purposes.
 
 ---
 
