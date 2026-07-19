@@ -203,4 +203,5 @@ def agent_invocation(payload, context):
 
 # This is required for containerized deployment
 if __name__ == "__main__":
+    print(f"Agent is running...on port 8080.")
     app.run()
