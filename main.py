@@ -1,4 +1,5 @@
 # main.py
+from pathlib import Path
 from strands import Agent, tool
 from strands.models.bedrock import BedrockModel
 from botocore.exceptions import ClientError
@@ -6,6 +7,23 @@ import boto3
 import json
 from datetime import datetime, timezone
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
+
+# ====================== LOAD SYSTEM PROMPT ======================
+
+def load_system_prompt(prompt_path: str = "prompt.md") -> str:
+    """Load system prompt from markdown file using pathlib."""
+    prompt_file = Path(prompt_path)
+    
+    if not prompt_file.exists():
+        raise FileNotFoundError(
+            f"Prompt file not found: {prompt_file.absolute()}\n"
+            f"Please create a file named '{prompt_path}' in the project root."
+        )
+    
+    try:
+        return prompt_file.read_text(encoding="utf-8").strip()
+    except Exception as e:
+        raise RuntimeError(f"Error reading prompt file {prompt_file}: {e}")
 
 # ====================== CUSTOM AWS TOOLS ======================
 
@@ -152,29 +170,8 @@ model = BedrockModel(
 agent = Agent(
     model=model,
     tools=[list_volumes, delete_volume, list_snapshots, delete_snapshot, find_old_resources],
-    system_prompt="""
-You are helpful AWS assistant with 10 years experience as AWS Senior Cloud Engineer in Fortune500 companies.
-
-You can work in any AWS region. The user can specify region like "eu-central-1", "eu-west-1", "us-east-1", etc.
-
-DO NOT take ANY actions in Amazon AWS except following on the list:
-
-1) list volumes
-2) delete volumes but only those with following parameters:
-    - volume state = available
-    - not attached to any resources
-3) list snapshots
-4) delete snapshots
-5) find EC2 volumes and snapshots older than (default: 30 days)
-6) create report, table in markdown, with info about volumes OR/AND snapshots from all regions
-
-Do not answer on any other questions except related to actual actions mentioned above.
-
-Answer in short, technical, merit-based, but satisfying way. Be a bit like Cookie Monster in AWS. Let's make a tool funny.
-
-Always confirm delete operation with YES/NO. Confirm deletion two times before execution - inform the user beforehand."""
+    system_prompt=load_system_prompt(),   # Loaded from prompt.md  
 )
-
 # ====================== AGENTCORE RUNTIME WRAPPER ======================
 
 app = BedrockAgentCoreApp()
